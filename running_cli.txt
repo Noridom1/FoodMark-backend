@@ -1,2 +1,2 @@
-uvicorn app.main:app --reload --port
+uvicorn app.main:app --reload
 
