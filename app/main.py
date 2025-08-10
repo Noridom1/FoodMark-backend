@@ -11,8 +11,11 @@ app.include_router(auth.router)
 def root():
     return {"message": "Backend is running!"}
 
+
 @app.get("/test-supabase")
 def test_supabase():
     # Example: fetch from a table called 'users'
-    data = supabase.table("Users").select("*").execute()
-    return {"data": data.data}
+    response = supabase.auth.get_user()
+    return response
+
+    
