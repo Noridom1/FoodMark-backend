@@ -12,7 +12,15 @@ app.include_router(video.router)
 def root():
     return {"message": "Backend is running!"}
 
-@app.get("/test-supabase")
+
+@app.get("/current_user")
 def test_supabase():
-    data = supabase.table("Users").select("*").execute()
-    return {"data": data.data}
+    # Example: fetch from a table called 'users'
+    response = supabase.auth.get_user()
+    return response
+
+@app.get("/bucket/{name}")
+def get_a_bucket(name: str):
+    buckets = supabase.storage.list_buckets()
+    
+
