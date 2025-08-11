@@ -6,7 +6,6 @@ app = FastAPI()
 
 # Register routers
 app.include_router(auth.router)
-
 @app.get("/")
 def root():
     return {"message": "Backend is running!"}
@@ -27,3 +26,8 @@ def get_a_bucket(name: str):
 @app.get("/summarize")
 def summarize_video():
     ai_service.summarize_video()
+
+
+@app.get('/classifier')
+def classify_video():
+    ai_service.classify_video()
