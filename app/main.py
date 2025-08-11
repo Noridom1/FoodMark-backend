@@ -1,11 +1,12 @@
 from fastapi import FastAPI
-from .routers import auth
+from .routers import auth, video
 from .database import supabase
 
 app = FastAPI()
 
 # Register routers
 app.include_router(auth.router)
+app.include_router(video.router)
 
 @app.get("/")
 def root():
@@ -22,4 +23,4 @@ def test_supabase():
 def get_a_bucket(name: str):
     buckets = supabase.storage.list_buckets()
     
-    print(buckets)
+
