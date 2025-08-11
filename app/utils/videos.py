@@ -3,6 +3,7 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from ..database import supabase
 
 def extract_id_from_url(url: str) -> str:
     path = urlparse(url).path
@@ -24,8 +25,22 @@ def download_video_tiktok(url: str, save_dir: str = os.path.join('storage', 'vid
                 metadata_fn='metadata.csv',
                 return_fns=True
             )
-            storage_path = os.path.join(save_dir, save_result['video_fn'])
-            return storage_path, None
+            # local_path = os.path.join(save_dir, save_result['video_fn'])
+            local_path = save_result['video_fn']
+
+            storage_path = f"{save_result['video_fn']}"
+
+            with open(local_path, "rb") as f:
+                res = supabase.storage.from_("videos").upload(
+                    storage_path, 
+                    f
+                )
+
+            # os.remove(local_path)  # remove local file after upload
+
+            public_url = supabase.storage.from_("videos").get_public_url(storage_path)
+            return public_url, None
+        
         except Exception as e:
             return None, e
 
