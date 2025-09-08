@@ -1,11 +1,13 @@
 from fastapi import FastAPI
-from .routers import auth
+from .routers import auth, video
 from .database import supabase
 from .services import ai_service
 app = FastAPI()
 
 # Register routers
 app.include_router(auth.router)
+app.include_router(video.router)
+
 @app.get("/")
 def root():
     return {"message": "Backend is running!"}

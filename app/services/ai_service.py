@@ -25,11 +25,12 @@ def summarize_video():
     print(response.text)
     return response
 
-def classify_video():
+def classify_video(video_url: str):
     client = genai.Client(api_key=settings.google_api_key)
 
     # 1. Public Supabase Storage video URL
-    video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
+    # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
+
     # 2. Download the video
     video_bytes = requests.get(video_url).content
     prompt = """
@@ -57,8 +58,8 @@ def classify_video():
         "response_schema": int,
         }
     )
-    print(response.text)
-    return response
+    # print(response.text)
+    return int(response.text)
 
 
 
