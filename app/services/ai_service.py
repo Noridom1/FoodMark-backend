@@ -8,9 +8,6 @@ import requests
 
 
 
-
-
-
 class Dish(BaseModel):
     name: str
     price: str
