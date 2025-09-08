@@ -4,11 +4,44 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from ..database import supabase
+import pandas as pd
 
 def extract_id_from_url(url: str) -> str:
     path = urlparse(url).path
     return path.rstrip('/').split('/')[-1]
 
+def get_video_description(video_id: str) -> str:
+    # read the CSV
+    df = pd.read_csv("metadata.csv")
+
+    # filter rows with matching video_id
+    matched_rows = df[df["video_id"] == video_id]
+
+    # get the latest one (last row)
+    if not matched_rows.empty:
+        latest_row = matched_rows.iloc[-1]
+        metadata = latest_row.to_dict()
+        return metadata['video_description']
+    else:
+        return ""
+
+def upload_video_to_bucket(local_path: str):
+    bucket = supabase.storage.from_("videobucket")
+    
+    # Extract just the filename
+    filename = os.path.basename(local_path)
+
+    # Check if file exists in bucket
+    existing_files = bucket.list()
+    if any(file["name"] == filename for file in existing_files):
+        print(f"⚠️ File '{filename}' already exists in bucket. Skipping upload.")
+        return None
+    
+    # Upload if not exists
+    with open(local_path, "rb") as f:
+        res = bucket.upload(filename, f)
+        print("✅ Upload successful:", res)
+        return res
 
 def download_video_tiktok(url: str, save_dir: str = os.path.join('storage', 'videos', 'downloaded')):
     os.makedirs(save_dir, exist_ok=True)
@@ -27,22 +60,25 @@ def download_video_tiktok(url: str, save_dir: str = os.path.join('storage', 'vid
             )
             # local_path = os.path.join(save_dir, save_result['video_fn'])
             local_path = save_result['video_fn']
+            # storage_path = f"{save_result['video_fn']}"
 
-            storage_path = f"{save_result['video_fn']}"
+            print("local_path:", local_path)
+            # print("storage_path:", storage_path)
+            # split by '_' and then remove the extension
+            video_id = local_path.split('_')[-1].split('.')[0]
 
-            with open(local_path, "rb") as f:
-                res = supabase.storage.from_("videos").upload(
-                    storage_path, 
-                    f
-                )
+            description = get_video_description(video_id)
+
+            upload_video_to_bucket(local_path)
 
             # os.remove(local_path)  # remove local file after upload
 
-            public_url = supabase.storage.from_("videos").get_public_url(storage_path)
-            return public_url, None
+            public_url = supabase.storage.from_("videobucket").get_public_url(local_path)
+            
+            return public_url, description, None
         
         except Exception as e:
-            return None, e
+            return None, None, e
 
     finally:
         os.chdir(old_cwd)
