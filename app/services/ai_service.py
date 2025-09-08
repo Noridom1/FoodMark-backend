@@ -28,6 +28,28 @@ class Restaurant(BaseModel):
     dishes: List[Dish] = []
     reviews: List[Review] = []
 
+class CookingStep(BaseModel):
+    step_number: int
+    instruction: str
+
+
+class CookingGuide(BaseModel):
+    title: str
+    summary: Optional[str] = None
+    ingredients: List[str]
+    steps: List[CookingStep]
+ 
+
+
+
+
+
+
+
+
+
+
+
 
 def classify_video():
     client = genai.Client(api_key=settings.google_api_key)
@@ -63,7 +85,12 @@ def classify_video():
     return response
 
 
-def summarize_video():
+def summarize_video(type):
+    if (type == 1):
+        schema = list[Restaurant]
+    else:
+        schema = CookingGuide
+    
     client = genai.Client(api_key=settings.google_api_key)
     video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
     video_bytes = requests.get(video_url).content
@@ -79,7 +106,7 @@ def summarize_video():
         ),
         config={
         "response_mime_type": "application/json",
-        "response_schema": list[Restaurant],
+        "response_schema": schema,
         }
     )
     print(response.text)
