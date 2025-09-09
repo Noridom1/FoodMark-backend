@@ -27,9 +27,19 @@ def get_a_bucket(name: str):
 
 @app.get("/summarize")
 def summarize_video():
-    ai_service.summarize_video()
+    data = ai_service.summarize_video(
+        type=0,
+        video_url="https://www.tiktok.com/@emmersweet/video/7543198147573468434?is_from_webapp=1&sender_device=pc"
+    )
+
+    return {
+        "status": "success",
+        "data": data
+    }
 
 
 @app.get('/classifier')
 def classify_video():
-    ai_service.classify_video()
+    ai_service.classify_video(
+        video_url="https://plsnwavugnuoppecuogh.supabase.co/storage/v1/object/public/videos/ComLuoi.mp4"
+    )

@@ -7,7 +7,6 @@ from typing import List, Optional
 import requests
 
 
-
 class Dish(BaseModel):
     name: str
     price: str
@@ -51,9 +50,9 @@ class CookingGuide(BaseModel):
 
 
 
-def classify_video():
+def classify_video(video_url):
     client = genai.Client(api_key=settings.google_api_key)
-    video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
+    # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
     video_bytes = requests.get(video_url).content
     
     prompt = """
@@ -82,17 +81,18 @@ def classify_video():
         }
     )
     print(response.text)
-    return response
+    return int(response.text)
 
 
-def summarize_video(type):
-    if (type == 1):
+def summarize_video(type, video_url):
+    if type == 0:
         schema = list[Restaurant]
     else:
         schema = CookingGuide
     
+    print(schema)
     client = genai.Client(api_key=settings.google_api_key)
-    video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
+    # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
     video_bytes = requests.get(video_url).content
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -109,9 +109,9 @@ def summarize_video(type):
         "response_schema": schema,
         }
     )
-    print(response.text)
-    get_distance("89-91 Nguyen Gia Tri, Binh Thanh")
-    return response
+    # print(response.text)
+    # get_distance("89-91 Nguyen Gia Tri, Binh Thanh")
+    return response.text
 
 
 def get_distance(address):
@@ -124,17 +124,31 @@ def get_distance(address):
     response = requests.get(url, params=params)
     if response.status_code == 200:
         data = response.json()
-        print(data)   # full JSON
+        # print(data)   # full JSON
         # Example: extract latitude & longitude
-        if data.get("results"):
-            location = data["results"][0]["geometry"]["location"]
+        if data.get("result"):
+            location = data["result"][0]["geometry"]["location"]
             print(location)
     else:
         print("Error:", response.status_code, response.text)
 
 
+def get_location(address: str):
+    url = "https://api.distancematrix.ai/maps/api/geocode/json"
+    params = {
+        "address": address,
+        "key": "OOV4afQIsa7SsVlWP1eF1RhrWZbJXA4HP1VTdvUhkqfvXg1cu2lHor0NmrCfASym"
+    }
 
-
-
-
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        # print(data)   # full JSON
+        # Example: extract latitude & longitude
+        if data.get("result"):
+            location = data["result"][0]["geometry"]["location"]
+            return location # {'lat': 10.803837, 'lng': 106.71570589999999}
+    else:
+        print("Error:", response.status_code, response.text)
+        return None
 
