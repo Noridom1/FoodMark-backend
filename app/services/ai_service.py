@@ -43,6 +43,24 @@ class CookingGuide(BaseModel):
  
 
 
+class DishRecommendation(BaseModel):
+    id: str
+    name: str
+    price: Optional[str] = None
+    rating: Optional[float] = None
+    taste: Optional[str] = None
+
+
+class StoreRecommendation(BaseModel):
+    id: str
+    name: str
+    address: str
+    distance_km: float
+    recommended_dishes: List[DishRecommendation]
+
+class RouteRecommendation(BaseModel):
+    route: List[StoreRecommendation]
+
 
 def classify_video(video_url):
     client = genai.Client(api_key=settings.google_api_key)
@@ -151,16 +169,8 @@ def get_location(address: str):
 
 
 
-def recommend_dish(user_id: str, user_lat= None, user_lng = None):
-    # Lấy tọa độ hiện tại của user
-    # user_location = get_location(user_address)
-    # if not user_location:
-    #     return {"error": "Không tìm được vị trí của user"}
-    # user_lat, user_lng = user_location["lat"], user_location["lng"]
-
-
-
-    # Lấy danh sách store
+def recommend_dish(user_id: str, user_lat=None, user_lng=None):
+    # Fetch stores from DB
     stores = (
         supabase
         .table("FoodStore")
@@ -170,12 +180,12 @@ def recommend_dish(user_id: str, user_lat= None, user_lng = None):
         .data
     )
 
-    # Build nội dung cho prompt
+    # Build prompt
     text_prompt = "Bạn là một trợ lý du lịch.\n"
     text_prompt += "Các quán ăn gần đây:\n"
 
     for store in stores:
-        # Lấy danh sách món ăn
+        # Get dishes for this store
         dishes = (
             supabase.table("Dishes")
             .select("*")
@@ -185,32 +195,60 @@ def recommend_dish(user_id: str, user_lat= None, user_lng = None):
             .data
         )
 
-        # Lấy lat/lng của store từ địa chỉ
+        # Get store location
         store_location = get_location(store["address"])
         if not store_location:
             continue
         store_lat, store_lng = store_location["lat"], store_location["lng"]
 
-        # Tính khoảng cách
+        # Compute distance
         distance_km = geodesic((user_lat, user_lng), (store_lat, store_lng)).km
-        dish_list = ", ".join([dish["name"] for dish in dishes]) if dishes else "Chưa có món ăn"
+
+        dish_str = "\n".join([
+            f"  - {dish['dish_id']} | {dish['name']} | {dish.get('price','')} | {dish.get('rating','')} | {dish.get('taste','')}"
+            for dish in dishes
+        ]) if dishes else "Chưa có món ăn"
 
         text_prompt += (
-            f"- {store['name']} (địa chỉ: {store['address']}), "
-            f"khoảng cách: {round(distance_km, 2)} km. "
-            f"Món ăn: {dish_list}\n"
+            f"- {store['id']} | {store['name']} | {store['address']} | "
+            f"{round(distance_km, 2)} km\n"
+            f"  Món ăn:\n{dish_str}\n"
         )
 
     text_prompt += "\nNhiệm vụ của bạn:\n"
     text_prompt += "1. Gợi ý một lộ trình tối ưu để ghé thăm các quán (có thể không cần đi tất cả).\n"
     text_prompt += "2. Ưu tiên khoảng cách ngắn trước, nhưng vẫn đảm bảo đa dạng món ăn.\n"
-    text_prompt += "3. Trả về kết quả dưới dạng JSON theo schema đã cho.\n"
+    text_prompt += "3. Trả về kết quả JSON theo schema sau:\n\n"
+    text_prompt += """{
+        "route": [
+            {
+                "id": "store_id",
+                "name": "Tên quán",
+                "address": "Địa chỉ",
+                "distance_km": 1.2,
+                "recommended_dishes": [
+                    {
+                        "id": "dish_id",
+                        "name": "Tên món",
+                        "price": "100000",
+                        "rating": 4.5,
+                        "taste": "spicy"
+                    }
+                ]
+            }
+        ]
+    }"""
 
-    # Call Gemini
+    # Call Gemini with schema enforcement
     client = genai.Client(api_key=settings.google_api_key)
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=text_prompt,
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": RouteRecommendation
+        }
     )
 
-    return response.text
+    # Parse JSON into Pydantic model
+    return RouteRecommendation.model_validate_json(response.text)
