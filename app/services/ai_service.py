@@ -108,7 +108,7 @@ def summarize_video(type, video_url):
     # )
     # print(response.text)
     # get_distance("89-91 Nguyen Gia Tri, Binh Thanh")
-    recommend_dish(user_id = "cbcf5839-9c3f-499a-b4a6-3302f734776c")
+    print(recommend_dish(user_id = "cbcf5839-9c3f-499a-b4a6-3302f734776c", user_lat=10, user_lng=104))
     return None
 
 
@@ -157,6 +157,8 @@ def recommend_dish(user_id: str, user_lat= None, user_lng = None):
     # if not user_location:
     #     return {"error": "Không tìm được vị trí của user"}
     # user_lat, user_lng = user_location["lat"], user_location["lng"]
+
+
 
     # Lấy danh sách store
     stores = (
