@@ -5,6 +5,8 @@ from ..config import settings
 from pydantic import BaseModel
 from typing import List, Optional
 import requests
+from ..database import supabase
+from geopy.distance import geodesic
 
 
 class Dish(BaseModel):
@@ -39,15 +41,6 @@ class CookingGuide(BaseModel):
     ingredients: List[str]
     steps: List[CookingStep]
  
-
-
-
-
-
-
-
-
-
 
 
 
@@ -95,27 +88,28 @@ def summarize_video(type, video_url):
 
     
     # print(schema)
-    client = genai.Client(api_key=settings.google_api_key)
-    # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
-    video_bytes = requests.get(video_url).content
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=types.Content(
-        parts=[
-            types.Part(
-                inline_data=types.Blob(data=video_bytes, mime_type='video/mp4')
-            ),
-            types.Part(text=text_prompt)
-        ]
-        ),
-        config={
-        "response_mime_type": "application/json",
-        "response_schema": schema,
-        }
-    )
+    # client = genai.Client(api_key=settings.google_api_key)
+    # # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
+    # video_bytes = requests.get(video_url).content
+    # response = client.models.generate_content(
+    #     model="gemini-2.5-flash",
+    #     contents=types.Content(
+    #     parts=[
+    #         types.Part(
+    #             inline_data=types.Blob(data=video_bytes, mime_type='video/mp4')
+    #         ),
+    #         types.Part(text=text_prompt)
+    #     ]
+    #     ),
+    #     config={
+    #     "response_mime_type": "application/json",
+    #     "response_schema": schema,
+    #     }
+    # )
     # print(response.text)
     # get_distance("89-91 Nguyen Gia Tri, Binh Thanh")
-    return response.text
+    recommend_dish(user_id = "cbcf5839-9c3f-499a-b4a6-3302f734776c")
+    return None
 
 
 def get_distance(address):
@@ -143,7 +137,6 @@ def get_location(address: str):
         "address": address,
         "key": "OOV4afQIsa7SsVlWP1eF1RhrWZbJXA4HP1VTdvUhkqfvXg1cu2lHor0NmrCfASym"
     }
-
     response = requests.get(url, params=params)
     if response.status_code == 200:
         data = response.json()
@@ -156,3 +149,66 @@ def get_location(address: str):
         print("Error:", response.status_code, response.text)
         return None
 
+
+
+def recommend_dish(user_id: str, user_lat= None, user_lng = None):
+    # Lấy tọa độ hiện tại của user
+    # user_location = get_location(user_address)
+    # if not user_location:
+    #     return {"error": "Không tìm được vị trí của user"}
+    # user_lat, user_lng = user_location["lat"], user_location["lng"]
+
+    # Lấy danh sách store
+    stores = (
+        supabase
+        .table("FoodStore")
+        .select("*")
+        .eq("user_id", user_id)
+        .execute()
+        .data
+    )
+
+    # Build nội dung cho prompt
+    text_prompt = "Bạn là một trợ lý du lịch.\n"
+    text_prompt += "Các quán ăn gần đây:\n"
+
+    for store in stores:
+        # Lấy danh sách món ăn
+        dishes = (
+            supabase.table("Dishes")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("store_id", store["id"])
+            .execute()
+            .data
+        )
+
+        # Lấy lat/lng của store từ địa chỉ
+        store_location = get_location(store["address"])
+        if not store_location:
+            continue
+        store_lat, store_lng = store_location["lat"], store_location["lng"]
+
+        # Tính khoảng cách
+        distance_km = geodesic((user_lat, user_lng), (store_lat, store_lng)).km
+        dish_list = ", ".join([dish["name"] for dish in dishes]) if dishes else "Chưa có món ăn"
+
+        text_prompt += (
+            f"- {store['name']} (địa chỉ: {store['address']}), "
+            f"khoảng cách: {round(distance_km, 2)} km. "
+            f"Món ăn: {dish_list}\n"
+        )
+
+    text_prompt += "\nNhiệm vụ của bạn:\n"
+    text_prompt += "1. Gợi ý một lộ trình tối ưu để ghé thăm các quán (có thể không cần đi tất cả).\n"
+    text_prompt += "2. Ưu tiên khoảng cách ngắn trước, nhưng vẫn đảm bảo đa dạng món ăn.\n"
+    text_prompt += "3. Trả về kết quả dưới dạng JSON theo schema đã cho.\n"
+
+    # Call Gemini
+    client = genai.Client(api_key=settings.google_api_key)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=text_prompt,
+    )
+
+    return response.text
