@@ -28,10 +28,12 @@ def get_a_bucket(name: str):
 @app.get("/summarize")
 def summarize_video():
     data = ai_service.summarize_video(
-        type=0,
-        video_url="https://www.tiktok.com/@emmersweet/video/7543198147573468434?is_from_webapp=1&sender_device=pc"
+        type=1,
+        video_url="https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/BaChiXotTac.mp4"
     )
 
+    print(data)
+    
     return {
         "status": "success",
         "data": data

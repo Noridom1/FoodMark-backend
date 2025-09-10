@@ -29,6 +29,7 @@ class Restaurant(BaseModel):
 
 class CookingStep(BaseModel):
     step_number: int
+    title: str
     instruction: str
 
 
@@ -87,10 +88,13 @@ def classify_video(video_url):
 def summarize_video(type, video_url):
     if type == 0:
         schema = list[Restaurant]
+        text_prompt = "Đây là một video về review những quán ăn, hãy trích xuất những thông tin về một hoặc nhiều quán ăn được nhắc đến trong video. Hãy trả lời bằng Tiếng Việt"
     else:
         schema = CookingGuide
+        text_prompt = "Đây là một video về hướng dẫn nấu ăn. Hãy trích xuất những thông tin về món ăn và cách nấu: Tên món ăn, miêu tả món ăn, nguyên liệu, các bước nấu ăn. Hãy trả lời bằng Tiếng Việt"
+
     
-    print(schema)
+    # print(schema)
     client = genai.Client(api_key=settings.google_api_key)
     # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
     video_bytes = requests.get(video_url).content
@@ -101,7 +105,7 @@ def summarize_video(type, video_url):
             types.Part(
                 inline_data=types.Blob(data=video_bytes, mime_type='video/mp4')
             ),
-            types.Part(text='Extract the information and the address of the place if needed')
+            types.Part(text=text_prompt)
         ]
         ),
         config={

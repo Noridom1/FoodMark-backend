@@ -48,6 +48,7 @@ def add_user_video(url: str, user_id: str):
 
 
     else:
+        print("[add_user_video] Video has already existed")
         video_id = video_existed.data[0]['id']
         vid_type = video_existed.data[0]['type']
         video_info = video_existed.data[0]['raw_info']
@@ -142,10 +143,99 @@ def add_foodstores(user_id, video_info):
     print("✅ All restaurants, dishes, and reviews inserted successfully.")
 
 
+# def add_recipes(user_id, video_info):
+#     print("Adding cooking recipe.")
+#     print(video_info)
+
+#     try:
+#         cooking_guide = json.loads(video_info)
+#     except json.JSONDecodeError as e:
+#         print("Failed to parse video_info:", e)
+#         return
+    
+#     name = cooking_guide.get('title')
+#     summary = cooking_guide.get('summary')
+#     ingredients = cooking_guide.get('ingredients')
+#     cooking_steps = cooking_guide.get('steps')
+
+#     ingre_list = []
+#     for i in ingredients:
+#         ingre = f"- {i}"
+#         ingre_list.append(ingre)
+    
+#     formatted_ingredients = "\n".join(ingre_list) if ingre_list else ""
+
+#     # --- Insert Cooking Guide ---
+#     guide_data = {
+#         "user_id": user_id,
+#         "name": name,
+#         "summary": summary,
+#         "ingredients": formatted_ingredients,
+#     }
+
+#     guide_res = supabase.table("Recipe").insert(guide_data).execute()
+#     if getattr(guide_res, "error", None):
+#         print("Error inserting Recipe:", guide_res.error)
+#         return
+    
+#     # --- Insert Cooking Steps ---
+#     recipe = guide_res.data[0]
+#     recipe_id = recipe["recipe_id"]
+
+#     for step in cooking_steps:
+#         step_number = step['step_number']
+#         title = step['title']
+#         instruction = step['instruction']
+
+#         step_data = {
+#             "user_id": user_id,
+#             "recipe_id": recipe_id,
+#             "step_number": step_number,
+#             "title": title,
+#             "instruction": instruction
+#         }
+
+#         step_res = supabase.table("CookingStep").insert(step_data).execute()
+#         if getattr(step_res, "error", None):
+#             print("Error inserting cooking step:", step_res.error)
+#             continue
+
+#     print("✅ The Cooking Guide with steps has been inserted successfully")
+
 def add_recipes(user_id, video_info):
     print("Adding cooking recipe.")
     print(video_info)
 
+    try:
+        cooking_guide = json.loads(video_info)
+    except json.JSONDecodeError as e:
+        print("Failed to parse video_info:", e)
+        return
+    
+    name = cooking_guide.get('title')
+    summary = cooking_guide.get('summary')
+    ingredients = cooking_guide.get('ingredients', [])
+    cooking_steps = cooking_guide.get('steps', [])
+
+    # Format ingredients into a string (same as before)
+    ingre_list = [f"- {i}" for i in ingredients]
+    formatted_ingredients = "\n".join(ingre_list) if ingre_list else ""
+
+    # Call the Postgres function via RPC
+    rpc_res = supabase.rpc("add_recipe_with_steps", {
+        "p_user_id": user_id,
+        "p_name": name,
+        "p_summary": summary,
+        "p_ingredients": formatted_ingredients,
+        "p_steps": cooking_steps  # must be JSON (list of dicts)
+    }).execute()
+
+    if getattr(rpc_res, "error", None):
+        print("❌ Error inserting recipe with steps:", rpc_res.error)
+        return
+
+    data = rpc_res.data
+    print(f"✅ Inserted Recipe successfully (user_id={data['user_id']}, recipe_id={data['recipe_id']})")
 
 def parse_price(price_str):
     if price_str is None:
@@ -181,3 +271,4 @@ def parse_price(price_str):
         return int(num * 1000)
     else:
         return int(num)
+
