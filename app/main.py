@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from .routers import auth, video
 from .database import supabase
 from .services import ai_service
+
+from fastapi import FastAPI, Form
+
 app = FastAPI()
+
 
 # Register routers
 app.include_router(auth.router)
@@ -45,3 +49,16 @@ def classify_video():
     ai_service.classify_video(
         video_url="https://plsnwavugnuoppecuogh.supabase.co/storage/v1/object/public/videos/ComLuoi.mp4"
     )
+
+
+@app.post("/foodtour/recommend")
+def get_recommendation(
+    user_id: str,
+    lat: float,
+    lng: float
+):
+    result = ai_service.get_recommendation(user_id=user_id, lat=lat, lng=lng)
+    return {
+        "status": "success",
+        "data": result
+    }
