@@ -76,7 +76,4 @@ def get_recommendation(
 @app.post("/foodtour/route")
 def get_route(points: list[tuple[float, float]] = Body(...)):
     gps_points = map_service.get_directions(points)
-    return {
-        "status": "success",
-        "results": gps_points
-    }
+    return gps_points
