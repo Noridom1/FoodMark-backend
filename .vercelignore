@@ -1,13 +1,23 @@
+# Ignore everything first
+/*
+
+# Allow only what Vercel needs
+!app
+!requirements.txt
+!vercel.json
+
+# If you have other configs needed for runtime, whitelist them here:
+!*.py
+!*.html
+
+# Explicitly exclude large or private dirs
 env/
-venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-.build/
-dist/
-.eggs/
-*.egg-info/
-*.log
-.DS_Store
+*.db
+*.sqlite3
+node_modules/
+.git/
