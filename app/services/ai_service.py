@@ -105,29 +105,29 @@ def summarize_video(type, video_url):
         text_prompt = "Đây là một video về hướng dẫn nấu ăn. Hãy trích xuất những thông tin về món ăn và cách nấu: Tên món ăn, miêu tả món ăn, nguyên liệu, các bước nấu ăn. Hãy trả lời bằng Tiếng Việt"
 
     
-    # print(schema)
-    # client = genai.Client(api_key=settings.google_api_key)
-    # # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
-    # video_bytes = requests.get(video_url).content
-    # response = client.models.generate_content(
-    #     model="gemini-2.5-flash",
-    #     contents=types.Content(
-    #     parts=[
-    #         types.Part(
-    #             inline_data=types.Blob(data=video_bytes, mime_type='video/mp4')
-    #         ),
-    #         types.Part(text=text_prompt)
-    #     ]
-    #     ),
-    #     config={
-    #     "response_mime_type": "application/json",
-    #     "response_schema": schema,
-    #     }
-    # )
+    print(schema)
+    client = genai.Client(api_key=settings.google_api_key)
+    # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
+    video_bytes = requests.get(video_url).content
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=types.Content(
+        parts=[
+            types.Part(
+                inline_data=types.Blob(data=video_bytes, mime_type='video/mp4')
+            ),
+            types.Part(text=text_prompt)
+        ]
+        ),
+        config={
+        "response_mime_type": "application/json",
+        "response_schema": schema,
+        }
+    )
     # print(response.text)
     # get_distance("89-91 Nguyen Gia Tri, Binh Thanh")
-    print(recommend_dish(user_id = "cbcf5839-9c3f-499a-b4a6-3302f734776c", user_lat=10, user_lng=104))
-    return None
+    # print(recommend_dish(user_id = "cbcf5839-9c3f-499a-b4a6-3302f734776c", user_lat=10, user_lng=104))
+    return response.text
 
 
 def get_distance(address):
