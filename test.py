@@ -3,6 +3,7 @@ import json
 import requests
 
 def get_directions(lat1, lon1, lat2, lon2):
+
     url = "http://router.project-osrm.org/route/v1/driving/{},{};{},{}?geometries=geojson".format(
     lon1, lat1, lon2, lat2
 )
