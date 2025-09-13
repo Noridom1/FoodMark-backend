@@ -3,6 +3,7 @@ from .routers import auth, video
 from .database import supabase
 from .services import ai_service
 from .services import map_service
+from .services.map_service import DestinationNode
 from fastapi import FastAPI, Form
 from fastapi import Query
 from typing import List
@@ -73,7 +74,10 @@ def get_recommendation(
 
 
 
-@app.post("/foodtour/route")
-def get_route(points: list[tuple[float, float]] = Body(...)):
-    gps_points = map_service.get_directions(points)
-    return gps_points
+@app.post("/foodtour/route", response_model=List[DestinationNode])
+def get_route(points: List[DestinationNode]):
+    coords = [(p.lat, p.lng) for p in points]
+    gps_points = map_service.get_directions(coords)
+
+    # Convert back into list of DestinationNode
+    return [DestinationNode(lat=lat, lng=lng) for lat, lng in gps_points]

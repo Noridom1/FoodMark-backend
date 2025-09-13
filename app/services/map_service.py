@@ -1,27 +1,26 @@
 import requests
 import json
+from typing import List
+from pydantic import BaseModel
 
-def get_directions(points: list[tuple[float, float]]):
-    """
-    Get directions for multiple points using OSRM.
-    points: list of (lat, lon) tuples
-    Example: [(lat1, lon1), (lat2, lon2), (lat3, lon3)]
-    """
+class DestinationNode(BaseModel):
+    lat: float
+    lng: float
+
+
+
+def get_directions(points: List[tuple[float, float]]):
     if len(points) < 2:
         raise ValueError("At least two points (start and end) are required")
 
-    # Build coordinates string: lon,lat;lon,lat;...
     coords_str = ";".join([f"{lon},{lat}" for lat, lon in points])
-
     url = f"http://router.project-osrm.org/route/v1/driving/{coords_str}?geometries=geojson"
-
     response = requests.get(url).json()
 
     coords = response["routes"][0]["geometry"]["coordinates"]
-
-    # Convert [lon, lat] -> (lat, lon)
     gps_points = [(lat, lon) for lon, lat in coords]
     return gps_points
+
 
 
 # # ✅ Example usage with 3 or 4 waypoints
