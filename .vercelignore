@@ -1,0 +1,12 @@
+# Ignore everything first
+/*
+
+# Allow only what Vercel needs
+!app
+!requirements.txt
+!vercel.json
+!vercelignore
+
+# If you have other configs needed for runtime, whitelist them here:
+!*.py
+!*.html
