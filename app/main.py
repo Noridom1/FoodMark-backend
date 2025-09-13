@@ -2,7 +2,12 @@ from fastapi import FastAPI
 from .routers import auth, video
 from .database import supabase
 from .services import ai_service
+from .services import map_service
 from fastapi import FastAPI, Form
+from fastapi import Query
+from typing import List
+from fastapi import Body
+
 
 app = FastAPI()
 
@@ -10,6 +15,7 @@ app = FastAPI()
 # Register routers
 app.include_router(auth.router)
 app.include_router(video.router)
+
 
 @app.get("/")
 def root():
@@ -63,3 +69,14 @@ def get_recommendation(
     #     "data": result
     # }
     return result
+
+
+
+
+@app.post("/foodtour/route")
+def get_route(points: list[tuple[float, float]] = Body(...)):
+    gps_points = map_service.get_directions(points)
+    return {
+        "status": "success",
+        "results": gps_points
+    }
