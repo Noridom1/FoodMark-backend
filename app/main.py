@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from .routers import auth, video
 from .database import supabase
 from .services import ai_service
-
 from fastapi import FastAPI, Form
 
 app = FastAPI()

@@ -5,19 +5,8 @@
 !app
 !requirements.txt
 !vercel.json
+!vercelignore
 
 # If you have other configs needed for runtime, whitelist them here:
 !*.py
 !*.html
-
-# Explicitly exclude large or private dirs
-env/
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.db
-*.sqlite3
-node_modules/
-.git/
