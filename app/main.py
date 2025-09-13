@@ -53,12 +53,14 @@ def classify_video():
 
 @app.post("/foodtour/recommend")
 def get_recommendation(
-    user_id: str,
-    lat: float,
-    lng: float
+    user_id: str = Form(...),
+    user_lat: float = Form(...),
+    user_lng: float = Form(...)
 ):
-    result = ai_service.get_recommendation(user_id=user_id, lat=lat, lng=lng)
-    return {
-        "status": "success",
-        "data": result
-    }
+    result = ai_service.recommend_dish(user_id=user_id, user_lat=user_lat, user_lng=user_lng)
+    print(result)
+    # return {
+    #     "status": "success",
+    #     "data": result
+    # }
+    return result

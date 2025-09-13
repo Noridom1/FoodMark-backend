@@ -55,6 +55,8 @@ class StoreRecommendation(BaseModel):
     id: str
     name: str
     address: str
+    lat: float
+    lng: float
     distance_km: float
     recommended_dishes: List[DishRecommendation]
 
@@ -197,12 +199,14 @@ def recommend_dish(user_id: str, user_lat=None, user_lng=None):
 
         # Get store location
         store_location = get_location(store["address"])
+        print(store['name'], store_location)
         if not store_location:
             continue
         store_lat, store_lng = store_location["lat"], store_location["lng"]
 
         # Compute distance
         distance_km = geodesic((user_lat, user_lng), (store_lat, store_lng)).km
+        
 
         dish_str = "\n".join([
             f"  - {dish['dish_id']} | {dish['name']} | {dish.get('price','')} | {dish.get('rating','')} | {dish.get('taste','')}"
@@ -210,7 +214,7 @@ def recommend_dish(user_id: str, user_lat=None, user_lng=None):
         ]) if dishes else "Chưa có món ăn"
 
         text_prompt += (
-            f"- {store['id']} | {store['name']} | {store['address']} | "
+            f"- {store['id']} | {store['name']} | {store['address']} | lat={store_lat} | lng={store_lng}"
             f"{round(distance_km, 2)} km\n"
             f"  Món ăn:\n{dish_str}\n"
         )
@@ -225,6 +229,8 @@ def recommend_dish(user_id: str, user_lat=None, user_lng=None):
                 "id": "store_id",
                 "name": "Tên quán",
                 "address": "Địa chỉ",
+                "lat": lat,
+                "lng": lng
                 "distance_km": 1.2,
                 "recommended_dishes": [
                     {
