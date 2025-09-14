@@ -62,6 +62,7 @@ class StoreRecommendation(BaseModel):
 
 class RouteRecommendation(BaseModel):
     route: List[StoreRecommendation]
+    description: str
 
 
 def classify_video(video_url):
@@ -243,6 +244,7 @@ def recommend_dish(user_id: str, user_lat=None, user_lng=None):
                 ]
             }
         ]
+        "description": "Viết một đoạn hướng dẫn hấp dẫn cho người dùng theo lộ trình food tour này. Bắt đầu từ quán đầu tiên, chỉ dẫn người dùng cách đi tiếp từng quán, nhấn mạnh trải nghiệm ẩm thực tại mỗi điểm, hương vị đặc trưng của các món ăn, khoảng cách giữa các quán, và cảm giác khám phá từng món. Sử dụng ngôn từ sinh động, gợi hình ảnh, kích thích vị giác và tạo cảm giác như đang dẫn người dùng thực sự đi trải nghiệm chuyến food tour này."
     }"""
 
     # Call Gemini with schema enforcement
