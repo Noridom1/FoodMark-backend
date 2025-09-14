@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from ..database import supabase
 import pandas as pd
+import json
 
 def extract_id_from_url(url: str) -> str:
     path = urlparse(url).path
@@ -49,7 +50,9 @@ def download_video_tiktok(url: str, save_dir: str = os.path.join('storage', 'vid
     old_cwd = os.getcwd()
     try:
         os.chdir(save_dir)
-        pyk.specify_browser('chrome')
+        # pyk.specify_browser('chrome')
+        pyk.cookies = json.load(open("cookies.json"), 'r')
+        print(pyk.cookies)
 
         try:
             save_result = pyk.save_tiktok(
@@ -84,7 +87,7 @@ def download_video_tiktok(url: str, save_dir: str = os.path.join('storage', 'vid
         os.chdir(old_cwd)
 
 
-def download_video_sstik(url: str, save_dir: str = os.path.join('storage', 'videos', 'downloaded')):
+def _download_video_sstik_internal(url: str, save_dir: str = os.path.join('storage', 'videos', 'downloaded')):
     """
     Download TikTok video using sstik.io service.
         url: The TikTok video URL to download.
@@ -257,3 +260,42 @@ def download_video_sstik(url: str, save_dir: str = os.path.join('storage', 'vide
         return None, f"File error: {str(e)}"
     except Exception as e:
         return None, f"Unexpected error: {str(e)}"
+    
+
+
+def download_video_sstik(url: str, save_dir: str = os.path.join('storage', 'videos', 'downloaded')):
+    """
+    Download TikTok video using sstik.io service and upload to Supabase.
+    Returns: (public_url, description, error)
+    """
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    try:
+        # --- Download the video ---
+        storage_path, error = _download_video_sstik_internal(url, save_dir)
+        if error:
+            return None, None, error
+
+        # --- Extract video ID from filename ---
+        video_id = os.path.basename(storage_path).split('_')[-1].split('.')[0]
+
+        # --- Get video description ---
+        # description = get_video_description(video_id)
+        description = ""
+
+        # --- Upload to Supabase ---
+        upload_result = upload_video_to_bucket(storage_path)
+        if upload_result is None:
+            # File already exists, still return the public URL
+            public_url = supabase.storage.from_("videobucket").get_public_url(os.path.basename(storage_path))
+        else:
+            public_url = supabase.storage.from_("videobucket").get_public_url(os.path.basename(storage_path))
+
+        # Optionally remove local file
+        # os.remove(storage_path)
+
+        return public_url, description, None
+
+    except Exception as e:
+        return None, None, e

@@ -8,6 +8,8 @@ import requests
 from ..database import supabase
 from geopy.distance import geodesic
 
+from google.genai.errors import ServerError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 class Dish(BaseModel):
     name: str
@@ -64,9 +66,13 @@ class RouteRecommendation(BaseModel):
     route: List[StoreRecommendation]
 
 
+@retry(
+    retry=retry_if_exception_type(ServerError),         # retry only on ServerError (like 503)
+    stop=stop_after_attempt(5),                         # max 5 retries
+    wait=wait_exponential(multiplier=2, min=4, max=60)  # backoff: 4s, 8s, 16s, ... up to 60s
+)
 def classify_video(video_url):
     client = genai.Client(api_key=settings.google_api_key)
-    # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
     video_bytes = requests.get(video_url).content
     
     prompt = """
@@ -82,22 +88,27 @@ def classify_video(video_url):
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=types.Content(
-        parts=[
-            types.Part(
-                inline_data=types.Blob(data=video_bytes, mime_type='video/mp4')
-            ),
-            types.Part(text=prompt)
-        ]
+            parts=[
+                types.Part(
+                    inline_data=types.Blob(data=video_bytes, mime_type='video/mp4')
+                ),
+                types.Part(text=prompt)
+            ]
         ),
         config={
-        "response_mime_type": "application/json",
-        "response_schema": int,
+            "response_mime_type": "application/json",
+            "response_schema": int,
         }
     )
+
     print(response.text)
     return int(response.text)
 
-
+@retry(
+    retry=retry_if_exception_type(ServerError),         # retry only on ServerError (like 503)
+    stop=stop_after_attempt(5),                         # max 5 retries
+    wait=wait_exponential(multiplier=2, min=4, max=60)  # backoff: 4s, 8s, 16s, ... up to 60s
+)
 def summarize_video(type, video_url):
     if type == 0:
         schema = list[Restaurant]

@@ -4,6 +4,7 @@ import os
 from ..services.ai_service import classify_video, summarize_video, get_location
 import json
 import re
+import time
 
 def add_user_video(url: str, user_id: str):
     """
@@ -21,8 +22,9 @@ def add_user_video(url: str, user_id: str):
         save_dir = os.path.join('storage', 'videos', 'downloaded')
         
         # Download video and upload to the bucket
-        # storage_path, error = videos.download_video_sstik(url=url, save_dir=save_dir)
-        public_url, vid_desc, error = videos.download_video_tiktok(url=url, save_dir=save_dir)
+        public_url, vid_desc, error = videos.download_video_sstik(url=url, save_dir=save_dir)
+
+        # public_url, vid_desc, error = videos.download_video_tiktok(url=url, save_dir=save_dir)
         if error:
             print(f"Error downloading video: {error}")
             return None, error
@@ -31,6 +33,7 @@ def add_user_video(url: str, user_id: str):
 
         # Process video
         vid_type = classify_video(public_url)
+        time.sleep(2)
         video_info = summarize_video(type=vid_type, video_url=public_url)
 
         # Insert video to database
