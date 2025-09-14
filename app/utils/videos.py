@@ -51,8 +51,6 @@ def download_video_tiktok(url: str, save_dir: str = os.path.join('storage', 'vid
     try:
         os.chdir(save_dir)
         # pyk.specify_browser('chrome')
-        pyk.cookies = json.load(open("cookies.json"), 'r')
-        print(pyk.cookies)
 
         try:
             save_result = pyk.save_tiktok(
