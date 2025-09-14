@@ -87,7 +87,7 @@ def classify_video(video_url):
     """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-pro",
         contents=types.Content(
             parts=[
                 types.Part(
@@ -124,7 +124,7 @@ def summarize_video(type, video_url):
     # video_url = "https://fgkmsasdgcykscfcsynx.supabase.co/storage/v1/object/public/videobucket/@dianthoii__video_7474461317957520658.mp4"
     video_bytes = requests.get(video_url).content
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-pro",
         contents=types.Content(
         parts=[
             types.Part(
@@ -261,7 +261,7 @@ def recommend_dish(user_id: str, user_lat=None, user_lng=None):
     # Call Gemini with schema enforcement
     client = genai.Client(api_key=settings.google_api_key)
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-pro",
         contents=text_prompt,
         config={
             "response_mime_type": "application/json",
