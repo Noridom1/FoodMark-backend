@@ -67,11 +67,11 @@ class RouteRecommendation(BaseModel):
     description: str
 
 
-@retry(
-    retry=retry_if_exception_type(ServerError),         # retry only on ServerError (like 503)
-    stop=stop_after_attempt(5),                         # max 5 retries
-    wait=wait_exponential(multiplier=2, min=4, max=60)  # backoff: 4s, 8s, 16s, ... up to 60s
-)
+# @retry(
+#     retry=retry_if_exception_type(ServerError),         # retry only on ServerError (like 503)
+#     stop=stop_after_attempt(5),                         # max 5 retries
+#     wait=wait_exponential(multiplier=2, min=4, max=60)  # backoff: 4s, 8s, 16s, ... up to 60s
+# )
 def classify_video(video_url):
     client = genai.Client(api_key=settings.google_api_key)
     video_bytes = requests.get(video_url).content
@@ -105,11 +105,11 @@ def classify_video(video_url):
     print(response.text)
     return int(response.text)
 
-@retry(
-    retry=retry_if_exception_type(ServerError),         # retry only on ServerError (like 503)
-    stop=stop_after_attempt(5),                         # max 5 retries
-    wait=wait_exponential(multiplier=2, min=4, max=60)  # backoff: 4s, 8s, 16s, ... up to 60s
-)
+# @retry(
+#     retry=retry_if_exception_type(ServerError),         # retry only on ServerError (like 503)
+#     stop=stop_after_attempt(5),                         # max 5 retries
+#     wait=wait_exponential(multiplier=2, min=4, max=60)  # backoff: 4s, 8s, 16s, ... up to 60s
+# )
 def summarize_video(type, video_url):
     if type == 0:
         schema = list[Restaurant]
