@@ -49,7 +49,7 @@ def download_video_tiktok(url: str, save_dir: str = os.path.join('storage', 'vid
     old_cwd = os.getcwd()
     try:
         os.chdir(save_dir)
-        pyk.specify_browser('chrome')
+        # pyk.specify_browser('chrome')
 
         try:
             save_result = pyk.save_tiktok(
